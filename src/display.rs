@@ -125,7 +125,7 @@ pub fn print_host_result(result: &HostScanResult) {
 
     // Display Vulnerability Alerts
     if !result.vulnerabilities.is_empty() {
-        println!("\n{}", "⚠️  VULNERABILITY & SECURITY ALERTS:".bright_red().bold());
+        println!("\n{}", "⚠️  SECURITY RESEARCHER VULNERABILITY AUDIT:".bright_red().bold());
         for alert in &result.vulnerabilities {
             let badge = match alert.severity.as_str() {
                 "CRITICAL" => "[CRITICAL]".on_red().white().bold(),
@@ -134,12 +134,26 @@ pub fn print_host_result(result: &HostScanResult) {
                 _ => "[LOW]".bright_blue().bold(),
             };
 
+            let cve_str = if let Some(ref cve) = alert.cve {
+                format!(" ({})", cve.bright_yellow())
+            } else {
+                String::new()
+            };
+
+            let cvss_str = if let Some(cvss) = alert.cvss {
+                format!(" [CVSS: {:.1}]", cvss)
+            } else {
+                String::new()
+            };
+
             println!(
-                "\n   {} {} (Port {})",
+                "\n   {} {}{}{}",
                 badge,
                 alert.title.bright_white().bold(),
-                alert.port.to_string().bright_cyan()
+                cve_str,
+                cvss_str.bright_magenta()
             );
+            println!("   Port: {}", alert.port.to_string().bright_cyan());
             println!("   Risk: {}", alert.description.white());
             println!("   Fix:  {}", alert.remediation.bright_green());
         }

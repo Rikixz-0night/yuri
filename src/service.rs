@@ -147,7 +147,12 @@ pub async fn probe_service(ip: IpAddr, port: u16, probe_timeout: Duration) -> Se
     }
 
     // Try reading initial greeting (SSH, FTP, SMTP, Telnet send greeting immediately)
-    if let Ok(Ok(n)) = timeout(Duration::from_millis(400), stream.read(&mut buf)).await {
+    let greeting_timeout = if port == 22 || port == 2222 {
+        Duration::from_millis(800)
+    } else {
+        Duration::from_millis(400)
+    };
+    if let Ok(Ok(n)) = timeout(greeting_timeout, stream.read(&mut buf)).await {
         if n > 0 {
             let banner_str = String::from_utf8_lossy(&buf[..n]).to_string();
             let cleaned = clean_banner(&banner_str);
@@ -201,12 +206,15 @@ pub async fn probe_service(ip: IpAddr, port: u16, probe_timeout: Duration) -> Se
                 if response.starts_with("HTTP/") {
                     info.name = if port == 443 || port == 8443 { "https" } else { "http" }.to_string();
 
-                    // Parse Server header
+                    // Parse Server and X-Powered-By headers
                     for line in response.lines() {
                         let lower = line.to_lowercase();
                         if lower.starts_with("server:") {
                             let server_val = line[7..].trim();
                             info.http_server = Some(server_val.to_string());
+                        } else if lower.starts_with("x-powered-by:") {
+                            let powered_val = line[13..].trim();
+                            info.details = Some(format!("X-Powered-By: {}", powered_val));
                         }
                     }
 

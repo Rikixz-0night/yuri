@@ -39,6 +39,7 @@ pub struct ScannerConfig {
     pub detect_os: bool,
     pub detect_service: bool,
     pub check_vulns: bool,
+    pub min_cvss: Option<f32>,
     pub quiet: bool,
 }
 
@@ -225,7 +226,11 @@ impl YuriScanner {
 
         // Vulnerability Probes
         let vulnerabilities = if self.config.check_vulns && host_up {
-            check_vulnerabilities(&discovered_ports, &services_map)
+            let mut alerts = check_vulnerabilities(&discovered_ports, &services_map);
+            if let Some(min_cvss) = self.config.min_cvss {
+                alerts.retain(|a| a.cvss.unwrap_or(0.0) >= min_cvss);
+            }
+            alerts
         } else {
             Vec::new()
         };

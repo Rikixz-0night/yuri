@@ -93,6 +93,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         detect_os: !args.no_os,
         detect_service: !args.no_service,
         check_vulns: !args.no_vuln,
+        min_cvss: args.min_cvss,
         quiet: args.quiet || args.json,
     };
 
@@ -197,9 +198,14 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     ));
                 }
                 if !r.vulnerabilities.is_empty() {
-                    text.push_str("Security Alerts:\n");
+                    text.push_str("Security Alerts & CVE Audits:\n");
                     for v in &r.vulnerabilities {
-                        text.push_str(&format!("  [{}] Port {}: {} - {}\n", v.severity, v.port, v.title, v.description));
+                        let cve_info = v.cve.as_deref().unwrap_or("N/A");
+                        let cvss_info = v.cvss.map(|c| format!(" [CVSS: {:.1}]", c)).unwrap_or_default();
+                        text.push_str(&format!(
+                            "  [{}] ({}{}) Port {}: {}\n    Risk: {}\n    Fix:  {}\n",
+                            v.severity, cve_info, cvss_info, v.port, v.title, v.description, v.remediation
+                        ));
                     }
                 }
                 text.push_str("\n");

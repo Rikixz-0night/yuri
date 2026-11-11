@@ -175,14 +175,38 @@ Yuri uses a hybrid heuristic inference engine that combines multiple layers of n
 
 ---
 
-## ⚠️ Built-in Security & Vulnerability Auditing
+## 🔬 Security Researcher & Vulnerability Engine
 
-Yuri automatically detects dangerous network misconfigurations:
-- 🚨 **Exposed Docker API (`port 2375`)**: Flags unauthenticated Docker daemon sockets that allow root container breakout.
-- 🚨 **Unauthenticated Redis (`port 6379`)**: Probes Redis with `PING` and warns if accessible without password.
-- ⚠️ **Cleartext Telnet (`port 23`)**: Warns about unencrypted credential transmission.
-- ⚠️ **Exposed SMB (`ports 445, 139`)**: Warns about public SMB exposure.
-- ⚠️ **Exposed Memcached / MongoDB / Elasticsearch**: Warns about unprotected databases.
+Yuri includes a high-performance heuristic vulnerability audit engine with CVE database mappings and CVSS severity scoring:
+
+### 1. Advanced SSH Version Vulnerability Auditing
+Yuri grabs live SSH identification banners and evaluates them against critical vulnerabilities:
+- 🚨 **CVE-2024-6387 (regreSSHion)**: Detects OpenSSH 8.5p1 through 9.7p1 vulnerable to unauthenticated remote code execution as root on glibc systems.
+- 🚨 **CVE-2018-10933 (libssh Auth Bypass)**: Detects vulnerable libssh versions (0.6.0-0.7.5, 0.8.0-0.8.3) allowing authentication bypass via `SSH2_MSG_USERAUTH_SUCCESS`.
+- ⚠️ **CVE-2023-48795 (Terrapin Attack)**: Detects OpenSSH < 9.6 vulnerable to prefix truncation and cipher downgrade attacks (ChaCha20-Poly1305 / CBC-EtM).
+- ⚠️ **CVE-2023-38408 (PKCS#11 Forwarding RCE)**: Detects OpenSSH < 9.3p2 vulnerable to remote library execution via forwarded agent sockets.
+- ⚠️ **CVE-2018-15473 (Username Enumeration)**: Identifies OpenSSH < 7.7 leaking valid username existence.
+- ⚠️ **Dropbear SSH Memory Flaws**: Audits legacy Dropbear releases (< 2022.82).
+
+### 2. Web & Application Server CVE Auditing
+- 🚨 **Apache HTTP Server RCE (CVE-2021-41773 / CVE-2021-42013)**: Flags Apache 2.4.49 and 2.4.50 path traversal and remote code execution flaws.
+- 🚨 **Grafana Arbitrary File Read (CVE-2021-43798)**: Identifies Grafana < 8.3.1 directory traversal.
+- 🚨 **Apache ActiveMQ OpenWire RCE (CVE-2023-46604)**: Warns of exposed ActiveMQ brokers susceptible to untrusted class unmarshaling.
+- ⚠️ **Nginx DNS Resolver Memory Overwrite (CVE-2021-23017)**: Detects vulnerable Nginx releases (< 1.20.1).
+- ⚠️ **End-of-Life PHP (CWE-1104)**: Identifies unsupported PHP 5.x / 7.x runtimes.
+- ⚠️ **Legacy Microsoft IIS (MS15-034)**: Detects obsolete IIS 6.0/7.x running on vulnerable HTTP.sys stacks.
+- ⚠️ **Spring Boot Actuator Information Disclosure**: Identifies exposed Actuator signatures (`/actuator/env`, `/heapdump`).
+
+### 3. Infrastructure & Database Exposures
+- 🚨 **Exposed Docker API (`port 2375`)**: Flags unauthenticated Docker daemon sockets granting host root compromise.
+- 🚨 **Unauthenticated Redis (`port 6379`)**: Probes Redis with `PING` and verifies cleartext execution.
+- 🚨 **Kubernetes Kubelet API (`port 10250`)**: Flags accessible Kubelet ports with anonymous execution risk.
+- 🚨 **etcd Key-Value Store (`port 2379/2380`)**: Flags exposed unencrypted control-plane clusters.
+- ⚠️ **HashiCorp Consul API (`port 8500`)**: Detects exposed Consul clusters vulnerable to script execution.
+- ⚠️ **Cleartext Telnet (`port 23`) & FTP (`port 21`)**: Warns about unencrypted credential transmission.
+- ⚠️ **Exposed SMB (`ports 445, 139`)**: Warns of wormable SMB risks (MS17-010 / EternalBlue).
+- ⚠️ **Memcached (`port 11211`)**: Warns of amplification DDoS vectors and cache dumps.
+- ⚠️ **Exposed Databases**: PostgreSQL (5432), MySQL (3306), MongoDB (27017), Elasticsearch (9200).
 
 ---
 
@@ -201,6 +225,7 @@ Options:
       --no-os                      Disable OS detection and fingerprinting
       --no-service                 Disable service banner grabbing
       --no-vuln                    Disable vulnerability heuristics
+      --min-cvss <MIN_CVSS>        Filter security vulnerabilities by minimum CVSS score (e.g. --min-cvss 7.0)
       --exclude-ports <EXCLUDE>    Comma-separated list of ports to exclude from scanning
       --json                       Output scan results in JSON format
   -o, --output <OUTPUT>            Save output report to specified file

@@ -37,6 +37,10 @@ pub struct Cli {
     #[arg(long = "no-vuln", default_value_t = false)]
     pub no_vuln: bool,
 
+    /// Filter security vulnerabilities by minimum CVSS score (e.g. --min-cvss 7.0)
+    #[arg(long = "min-cvss")]
+    pub min_cvss: Option<f32>,
+
     /// Comma-separated list of ports to exclude from scanning
     #[arg(long = "exclude-ports")]
     pub exclude_ports: Option<String>,
